@@ -1,0 +1,15 @@
+{
+  "name": "message-polisher-bot",
+  "version": "1.0.0",
+  "description": "Discord bot that polishes messages using AI",
+  "main": "discord-bot.js",
+  "scripts": {
+    "start": "node discord-bot.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
