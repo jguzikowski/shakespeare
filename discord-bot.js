@@ -13,7 +13,7 @@ const {
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN; // Your bot token
 const CLIENT_ID = process.env.CLIENT_ID; // Your bot's application ID
 const CLOUDFLARE_API_URL = "https://shakestranslator.pages.dev/api/polish"; // Your Cloudflare function URL
-const AUTO_ROAST_CHANCE = 0.10; // 10% chance (0.01 = 1%, 0.05 = 5%, etc.)
+const AUTO_ROAST_CHANCE = 0.035; // 10% chance (0.01 = 1%, 0.05 = 5%, etc.)
 
 // Create Discord client
 const client = new Client({
