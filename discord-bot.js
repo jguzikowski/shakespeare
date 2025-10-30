@@ -51,14 +51,21 @@ async function registerCommands() {
 }
 
 // Process text with AI (Shakespeare or Roast)
-async function processText(text, mode = "shakespeare") {
+async function processText(text, mode = "shakespeare", username = null) {
     try {
+        const payload = { text, mode };
+        
+        // Add username if provided (for roasts)
+        if (username && mode === "roast") {
+            payload.username = username;
+        }
+        
         const response = await fetch(CLOUDFLARE_API_URL, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ text, mode }), // Pass mode to API
+            body: JSON.stringify(payload),
         });
 
         if (!response.ok) {
@@ -88,8 +95,8 @@ client.on("interactionCreate", async (interaction) => {
                 content: `${message.author}, behold thy words transformed:\n\n**Original:**\n>>> ${message.content}\n\n**Shakespearean:**\n>>> ${polishedText}`,
             });
         } else if (interaction.commandName === "Roast this Message") {
-            // Roast mode - just pass the text and mode
-            const roast = await processText(message.content, "roast");
+            // Roast mode - pass username too
+            const roast = await processText(message.content, "roast", message.author.username);
             await interaction.editReply({
                 content: `${message.author}\n\n**Original:**\n>>> ${message.content}\n\n**The Roast:**\n>>> ${roast}`,
             });
@@ -114,8 +121,8 @@ client.on("messageCreate", async (message) => {
         console.log(`🎲 Auto-roasting ${message.author.username}'s message!`);
         
         try {
-            // Generate the roast using the roast mode
-            const roast = await processText(message.content, "roast");
+            // Generate the roast using the roast mode with username
+            const roast = await processText(message.content, "roast", message.author.username);
             
             // Reply to the message with the roast
             await message.reply({
