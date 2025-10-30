@@ -91,7 +91,7 @@ client.on("interactionCreate", async (interaction) => {
             // Roast mode - just pass the text and mode
             const roast = await processText(message.content, "roast");
             await interaction.editReply({
-                content: `${message.author}\n>>> ${roast}`,
+                content: `${message.author}\n\n**Original:**\n>>> ${message.content}\n\n**The Roast:**\n>>> ${roast}`,
             });
         }
     } catch (error) {
