@@ -13,7 +13,7 @@ const {
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN; // Your bot token
 const CLIENT_ID = process.env.CLIENT_ID; // Your bot's application ID
 const CLOUDFLARE_API_URL = "https://shakestranslator.pages.dev/api/polish"; // Your Cloudflare function URL
-const AUTO_ROAST_CHANCE = 0.10; // 1% chance (0.01 = 1%, 0.05 = 5%, etc.)
+const AUTO_ROAST_CHANCE = 0.10; // 10% chance (0.01 = 1%, 0.05 = 5%, etc.)
 
 // Create Discord client
 const client = new Client({
@@ -73,33 +73,6 @@ async function processText(text, mode = "shakespeare") {
     }
 }
 
-// Generate a roast using AI
-async function generateRoast(text) {
-    // For now, we'll use a simple prompt modification
-    // You can create a separate Cloudflare function endpoint for roasts later
-    const roastPrompt = `Roast this terrible message, let them have it, hold nothing back and make it R-rated: "${text}"`;
-    
-    try {
-        const response = await fetch(CLOUDFLARE_API_URL, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ text: roastPrompt }),
-        });
-
-        if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        return data.polished;
-    } catch (error) {
-        console.error("Error generating roast:", error);
-        throw error;
-    }
-}
-
 // Handle context menu interactions
 client.on("interactionCreate", async (interaction) => {
     if (!interaction.isContextMenuCommand()) return;
@@ -110,15 +83,15 @@ client.on("interactionCreate", async (interaction) => {
     try {
         if (interaction.commandName === "Shakespeare the Message") {
             // Shakespeare mode
-            const polishedText = await processText(message.content);
+            const polishedText = await processText(message.content, "shakespeare");
             await interaction.editReply({
                 content: `${message.author}, behold thy words transformed:\n\n**Original:**\n>>> ${message.content}\n\n**Shakespearean:**\n>>> ${polishedText}`,
             });
         } else if (interaction.commandName === "Roast this Message") {
-            // Roast mode
-            const roast = await generateRoast(message.content);
+            // Roast mode - just pass the text and mode
+            const roast = await processText(message.content, "roast");
             await interaction.editReply({
-                content: `${message.author} 🔥 **ROASTED** 🔥\n\n**Original message:**\n>>> ${message.content}\n\n**The Roast:**\n>>> ${roast}`,
+                content: `${message.author}\n>>> ${roast}`,
             });
         }
     } catch (error) {
@@ -141,8 +114,8 @@ client.on("messageCreate", async (message) => {
         console.log(`🎲 Auto-roasting ${message.author.username}'s message!`);
         
         try {
-            // Generate the roast
-            const roast = await generateRoast(message.content);
+            // Generate the roast using the roast mode
+            const roast = await processText(message.content, "roast");
             
             // Reply to the message with the roast
             await message.reply({
