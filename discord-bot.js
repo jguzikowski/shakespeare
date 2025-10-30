@@ -77,7 +77,7 @@ async function processText(text, mode = "shakespeare") {
 async function generateRoast(text) {
     // For now, we'll use a simple prompt modification
     // You can create a separate Cloudflare function endpoint for roasts later
-    const roastPrompt = `Roast this terrible message with maximum sass and humor, but keep it friendly: "${text}"`;
+    const roastPrompt = `Roast this terrible message with maximum sass and humor: "${text}"`;
     
     try {
         const response = await fetch(CLOUDFLARE_API_URL, {
