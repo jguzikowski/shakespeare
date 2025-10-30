@@ -6,10 +6,11 @@
   "scripts": {
     "start": "node discord-bot.js"
   },
-  "dependencies": {
-    "discord.js": "^14.14.1"
-  },
   "engines": {
-    "node": ">=16.0.0"
+    "node": "18.x"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "undici": "^5.27.0"
   }
 }
