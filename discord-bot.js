@@ -13,7 +13,7 @@ const {
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN; // Your bot token
 const CLIENT_ID = process.env.CLIENT_ID; // Your bot's application ID
 const CLOUDFLARE_API_URL = "https://shakestranslator.pages.dev/api/polish"; // Your Cloudflare function URL
-const AUTO_ROAST_CHANCE = 0.01; // 10% chance (0.01 = 1%, 0.05 = 5%, etc.)
+const AUTO_ROAST_CHANCE = 0.10; // 10% chance (0.01 = 1%, 0.05 = 5%, etc.)
 
 // Create Discord client
 const client = new Client({
@@ -50,14 +50,48 @@ async function registerCommands() {
     }
 }
 
+// Get recent messages from the conversation for context
+async function getRecentConversationContext(channel, targetMessageId, limit = 10) {
+    try {
+        // Fetch recent messages from the channel
+        const messages = await channel.messages.fetch({ limit: 50 });
+        
+        // Find the target message
+        const targetMessage = messages.get(targetMessageId);
+        if (!targetMessage) return null;
+        
+        // Get messages that came before the target message (chronologically)
+        const contextMessages = messages
+            .filter(msg => 
+                msg.createdTimestamp <= targetMessage.createdTimestamp && 
+                !msg.author.bot
+            )
+            .sort((a, b) => a.createdTimestamp - b.createdTimestamp) // Chronological order
+            .last(limit);
+        
+        // Format: "Username: message content"
+        return contextMessages
+            .map(msg => `${msg.author.username}: ${msg.content}`)
+            .join('\n');
+    } catch (error) {
+        console.error("Error fetching conversation context:", error);
+        return null;
+    }
+}
+
 // Process text with AI (Shakespeare or Roast)
-async function processText(text, mode = "shakespeare", username = null) {
+async function processText(text, mode = "shakespeare", username = null, conversationContext = null) {
     try {
         const payload = { text, mode };
         
         // Add username if provided (for roasts)
         if (username && mode === "roast") {
             payload.username = username;
+        }
+        
+        // Add conversation context if provided
+        if (conversationContext && mode === "roast") {
+            payload.conversationContext = conversationContext;
         }
         
         const response = await fetch(CLOUDFLARE_API_URL, {
@@ -95,8 +129,20 @@ client.on("interactionCreate", async (interaction) => {
                 content: `${message.author}, behold thy words transformed:\n\n**Original:**\n>>> ${message.content}\n\n**Shakespearean:**\n>>> ${polishedText}`,
             });
         } else if (interaction.commandName === "Roast this Message") {
-            // Roast mode - pass username too
-            const roast = await processText(message.content, "roast", message.author.username);
+            // Roast mode - get full conversation context
+            const conversationContext = await getRecentConversationContext(
+                message.channel,
+                message.id,
+                10  // Get last 10 messages in the conversation
+            );
+            
+            const roast = await processText(
+                message.content,
+                "roast",
+                message.author.username,
+                conversationContext
+            );
+            
             await interaction.editReply({
                 content: `${message.author}\n\n**Original:**\n>>> ${message.content}\n\n**The Roast:**\n>>> ${roast}`,
             });
@@ -121,8 +167,20 @@ client.on("messageCreate", async (message) => {
         console.log(`🎲 Auto-roasting ${message.author.username}'s message!`);
         
         try {
-            // Generate the roast using the roast mode with username
-            const roast = await processText(message.content, "roast", message.author.username);
+            // Get full conversation context
+            const conversationContext = await getRecentConversationContext(
+                message.channel,
+                message.id,
+                10  // Get last 10 messages in the conversation
+            );
+            
+            // Generate the roast using the roast mode with username and context
+            const roast = await processText(
+                message.content,
+                "roast",
+                message.author.username,
+                conversationContext
+            );
             
             // Reply to the message with the roast
             await message.reply({
